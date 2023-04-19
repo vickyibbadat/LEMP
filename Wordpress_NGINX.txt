@@ -1,0 +1,126 @@
+		**********    How to install and configure WordPress with NGINX ***********
+
+1. sudo apt update
+2. sudo apt upgrade
+
+
+
+Step 1: Install NGINX :---
+
+3. sudo apt install nginx 
+4. sudo systemctl status nginx
+
+
+
+Step 2: Install MySQL :---
+
+5. sudo apt install mysql-server 
+6. sudo systemctl status mysql
+7. sudo mysql -u root -p
+8. CREATE DATABASE WordPress CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
+9. CREATE USER 'user'@'localhost' IDENTIFIED BY 'password';
+10. GRANT ALL PRIVILEGES ON WordPress.* TO 'user'@'localhost';
+11. EXIT;
+
+
+
+Step 3: Install PHP :---
+
+12. sudo apt install php-fpm
+13. sudo systemctl status php8.1-fpm
+14. sudo apt-get install php-mysql
+
+
+
+Step 4: Install WordPress :---
+
+15. sudo mkdir -p /var/www/html/example.com
+16. cd /var/www/html/example.com
+17. sudo wget https://wordpress.org/latest.tar.gz
+18. sudo tar -xvzf latest.tar.gz
+19. sudo chown -R www-data: /var/www/html/example.com/
+
+
+
+Step 5: Customize the WordPress configuration file :---
+
+20. cd /var/www/html/example.com/wordpress/
+21. sudo cp wp-config-sample.php wp-config.php
+22. sudo vim wp-config.php
+
+
+********************************* Fill This Database Details as given below *********************************
+
+/** The name of the database for WordPress */
+define( 'DB_NAME', 'WordPress' );
+
+/** Database username */
+define( 'DB_USER', 'user' );
+
+/** Database password */
+define( 'DB_PASSWORD', 'password' );
+
+/** Database hostname */
+define( 'DB_HOST', 'localhost' );
+
+************************************************************************************************************
+
+
+
+Step 6: Set NGINX :---
+
+23. sudo vim /etc/nginx/conf.d/example.com.conf 
+
+*************************** Paste this all data into same file ********************************************
+
+server {
+    listen 8000;
+    root /var/www/html/example.com;
+    index  index.php index.html index.htm;
+    server_name _;
+
+    client_max_body_size 500M;
+
+    location / {
+        try_files $uri $uri/ /index.php?$args;
+    }
+
+    location = /favicon.ico {
+        log_not_found off;
+        access_log off;
+    }
+
+    location ~* \.(js|css|png|jpg|jpeg|gif|ico)$ {
+        expires max;
+        log_not_found off;
+    }
+
+    location = /robots.txt {
+        allow all;
+        log_not_found off;
+        access_log off;
+    }
+
+    location ~ \.php$ {
+         include snippets/fastcgi-php.conf;
+         fastcgi_pass unix:/var/run/php/php8.1-fpm.sock;
+         fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+         include fastcgi_params;
+    }
+}
+
+*********************************************************************************************************** 
+
+
+24. sudo nginx -t 
+25. sudo mv -r /var/www/html/example.com/wordpress/* /var/www/html/example.com/
+26. sudo rm -rvf /var/www/html/example.com/wordpress 
+27. sudo rm -rvf /var/www/html/example.com/latest.tar.gz
+28. sudo systemctl restart nginx 
+
+
+*************************** Everything is now we can access WordPress by this link given below  ***********
+
+Link -->  http://InstanceIP:8000
+ or
+Link --> http://localhost:8000
